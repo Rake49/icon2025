@@ -27,4 +27,6 @@ differentialColumn = 'Personality'
 #     ('Naive Bayes', MultinomialNB())
 # ]
 
-model = apprendimentoSupervisionato.trainModelKFold(dataSet, differentialColumn)
+# model = apprendimentoSupervisionato.trainModelKFold(dataSet, differentialColumn)
+
+bayesianNetwork = reteBayesana.bNetCreation(dataSet)
