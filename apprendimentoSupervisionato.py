@@ -228,11 +228,11 @@ def trainModelKFold(dataSet, differentialColumn):
                                 max_features=bestParameters['randForMax_features'])
     neurNet = MLPClassifier(
         hidden_layer_sizes = bestParameters['neurNet__hidden_layer_sizes'],
-        neurNet__activation = bestParameters['neurNet__activation'],
-        neurNet__solver = bestParameters['neurNet__solver'],
-        neurNet__alpha = bestParameters['neurNet__alpha'],
-        neurNet__learning_rate = bestParameters['neurNet__learning_rate'],
-        neurNet__max_iter = bestParameters['neurNet__max_iter']
+        activation = bestParameters['neurNet__activation'],
+        solver = bestParameters['neurNet__solver'],
+        alpha = bestParameters['neurNet__alpha'],
+        learning_rate = bestParameters['neurNet__learning_rate'],
+        max_iter = bestParameters['neurNet__max_iter']
     )
     
     # reg = LogisticRegression(C=bestParameters['LogisticRegression__C'],
@@ -341,7 +341,7 @@ def visualizeMetricsGraphs(model):
     mean_recall = np.mean(recall, axis=1)
     # mean_rmse = np.mean(rmse, axis=1)
     # mean_precision = np.mean(precision, axis=1)
-
+    yint = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
     # Creazione del grafico a barre per Precision
     plt.figure(figsize=(12, 6))
     bar_width = 0.4
@@ -349,6 +349,7 @@ def visualizeMetricsGraphs(model):
     plt.bar(index, mean_precision, bar_width, label='precision')
     plt.xlabel('Modelli')
     plt.ylabel('Precision media')
+    plt.yticks(yint)
     plt.title('Precision media per ogni modello')
     plt.xticks(index, models)
     plt.legend()
@@ -363,6 +364,7 @@ def visualizeMetricsGraphs(model):
     plt.ylabel('Accuracy media')
     plt.title('Accuracy media per ogni modello')
     plt.xticks(index, models)
+    plt.yticks(yint)
     plt.legend()
     plt.show()
 
@@ -375,6 +377,7 @@ def visualizeMetricsGraphs(model):
     plt.ylabel('F1 media')
     plt.title('F1 media per ogni modello')
     plt.xticks(index, models)
+    plt.yticks(yint)
     plt.legend()
     plt.show()
 
@@ -387,6 +390,7 @@ def visualizeMetricsGraphs(model):
     plt.ylabel('Recall media')
     plt.title('Recall media per ogni modello')
     plt.xticks(index, models)
+    plt.yticks(yint)
     plt.legend()
     plt.show()
 

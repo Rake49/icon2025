@@ -1,19 +1,19 @@
 {
     "DecisionTree__criterion": "log_loss",
-    "DecisionTree__splitter": "best",
+    "DecisionTree__splitter": "random",
     "decTreeMin_samples_split": 5,
     "decTreeMin_samples_leaf": 3,
-    "decTreeMax_features": null,
+    "decTreeMax_features": "sqrt",
     "n_estimators": 50,
-    "randForMin_samples_split": 5,
-    "randForMin_samples_leaf": 1,
-    "randForMax_features": null,
+    "randForMin_samples_split": 2,
+    "randForMin_samples_leaf": 3,
+    "randForMax_features": "sqrt",
     "neurNet__hidden_layer_sizes": [
         20
     ],
-    "neurNet__activation": "relu",
-    "neurNet__solver": "adam",
-    "neurNet__alpha": 0.05,
+    "neurNet__activation": "logistic",
+    "neurNet__solver": "sgd",
+    "neurNet__alpha": 0.0001,
     "neurNet__learning_rate": "constant",
     "neurNet__max_iter": 2000
 }
