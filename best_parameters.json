@@ -4,8 +4,16 @@
     "decTreeMin_samples_split": 5,
     "decTreeMin_samples_leaf": 3,
     "decTreeMax_features": null,
-    "n_estimators": 100,
-    "randForMin_samples_split": 2,
+    "n_estimators": 50,
+    "randForMin_samples_split": 5,
     "randForMin_samples_leaf": 1,
-    "randForMax_features": null
+    "randForMax_features": null,
+    "neurNet__hidden_layer_sizes": [
+        20
+    ],
+    "neurNet__activation": "relu",
+    "neurNet__solver": "adam",
+    "neurNet__alpha": 0.05,
+    "neurNet__learning_rate": "constant",
+    "neurNet__max_iter": 2000
 }

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 
 from sklearn.model_selection import KFold, RepeatedKFold, learning_curve, train_test_split, cross_val_score, GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -60,6 +61,7 @@ def returnBestHyperparametres(dataset, differentialColumn):
 
     decTree = DecisionTreeClassifier()
     randFor = RandomForestClassifier()
+    neurNet = MLPClassifier()
     # ridgeReg = Ridge()
     # catboost = CatBoostRegressor()
 
@@ -79,7 +81,15 @@ def returnBestHyperparametres(dataset, differentialColumn):
         'RandomForest__min_samples_leaf': [1, 3], 
         'RandomForest__max_features': [None, 'sqrt']
     }
-
+    neurNetParameters = {
+        'neurNet__hidden_layer_sizes': [(20,), (40,), (20, 10), (40,20)],
+        'neurNet__activation': ['logistic', 'relu'],
+        'neurNet__solver': ['sgd', 'adam'],
+        'neurNet__alpha': [0.0001, 0.05],
+        'neurNet__learning_rate': ['constant', 'adaptive'],
+        'neurNet__max_iter': [2000]
+    }
+    
     # RidgeRegressorHyperparameters = {
     #     'Ridge__alpha': [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10, 14, 15, 16],
     #     'Ridge__solver': ['auto'],
@@ -105,11 +115,14 @@ def returnBestHyperparametres(dataset, differentialColumn):
         Pipeline([('DecisionTree', decTree)]), param_grid=decTreeParameters, cv=5)
     gridSearchCV_randFor = GridSearchCV(
         Pipeline([('RandomForest', randFor)]), param_grid=randForParameters, cv=5)
+    gridSearchCV_neurNet = GridSearchCV(
+        Pipeline([('neurNet', neurNet)]), param_grid=neurNetParameters, cv=5)
     # gridSearchCV_reg = GridSearchCV(Pipeline(
     #     [('LogisticRegression', reg)]), LogisticRegressionHyperparameters, cv=5)
 
     gridSearchCV_decTree.fit(X_train, y_train)
     gridSearchCV_randFor.fit(X_train, y_train)
+    gridSearchCV_neurNet.fit(X_train, y_train)
     # gridSearchCV_ridgeReg.fit(X_train, y_train)
     # gridSearchCV_catboost.fit(X_train, y_train)
     # gridSearchCV_linearReg.fit(X_train, y_train)
@@ -127,6 +140,13 @@ def returnBestHyperparametres(dataset, differentialColumn):
         'randForMin_samples_split': gridSearchCV_randFor.best_params_['RandomForest__min_samples_split'],
         'randForMin_samples_leaf': gridSearchCV_randFor.best_params_['RandomForest__min_samples_leaf'],
         'randForMax_features': gridSearchCV_randFor.best_params_['RandomForest__max_features'],
+
+        'neurNet__hidden_layer_sizes': gridSearchCV_neurNet.best_params_['neurNet__hidden_layer_sizes'],
+        'neurNet__activation': gridSearchCV_neurNet.best_params_['neurNet__activation'],
+        'neurNet__solver': gridSearchCV_neurNet.best_params_['neurNet__solver'],
+        'neurNet__alpha': gridSearchCV_neurNet.best_params_['neurNet__alpha'],
+        'neurNet__learning_rate': gridSearchCV_neurNet.best_params_['neurNet__learning_rate'],
+        'neurNet__max_iter': gridSearchCV_neurNet.best_params_['neurNet__max_iter']
 
         # 'Ridge__alpha': gridSearchCV_ridgeReg.best_params_['Ridge__alpha'],
         # 'Ridge__solver': gridSearchCV_ridgeReg.best_params_['Ridge__solver'],
@@ -171,6 +191,12 @@ def trainModelKFold(dataSet, differentialColumn):
             'f1': [],
             'recall': [],
         },
+        'neurNet': {
+            'accuracy': [],
+            'precision': [],
+            'f1': [],
+            'recall': []
+        }
         # 'Naive Bayes': {
         #     'accuracy': [],
         #     'precision': [],
@@ -200,6 +226,14 @@ def trainModelKFold(dataSet, differentialColumn):
                                 min_samples_split=bestParameters['randForMin_samples_split'],
                                 min_samples_leaf=bestParameters['randForMin_samples_leaf'],
                                 max_features=bestParameters['randForMax_features'])
+    neurNet = MLPClassifier(
+        hidden_layer_sizes = bestParameters['neurNet__hidden_layer_sizes'],
+        neurNet__activation = bestParameters['neurNet__activation'],
+        neurNet__solver = bestParameters['neurNet__solver'],
+        neurNet__alpha = bestParameters['neurNet__alpha'],
+        neurNet__learning_rate = bestParameters['neurNet__learning_rate'],
+        neurNet__max_iter = bestParameters['neurNet__max_iter']
+    )
     
     # reg = LogisticRegression(C=bestParameters['LogisticRegression__C'],
     #                          penalty=bestParameters['LogisticRegression__penalty'],
@@ -220,6 +254,7 @@ def trainModelKFold(dataSet, differentialColumn):
 
     results_decTree = {}
     results_randFor = {}
+    results_neurNet = {}
     # results_ridge = {}
     # results_catboost = {}
     # results_dummy = {}
@@ -227,6 +262,7 @@ def trainModelKFold(dataSet, differentialColumn):
     for metric in scoring_metrics:
         scores_decTree = cross_val_score(decTree, X, y, scoring=metric, cv=cv)
         scores_randFor = cross_val_score(randFor, X, y, scoring=metric, cv=cv)
+        scores_neurNet = cross_val_score(neurNet, X, y, scoring=metric, cv=cv)
         # scores_reg = cross_val_score(reg, X, y, scoring=metric, cv=cv)
         # score_ridge = cross_val_score(ridge, X, y, scoring=metric, cv=cv)
         # score_catboost = cross_val_score(catboost, X, y, scoring=metric, cv=cv)
@@ -235,6 +271,7 @@ def trainModelKFold(dataSet, differentialColumn):
 
         results_decTree[metric] = scores_decTree
         results_randFor[metric] = scores_randFor
+        results_neurNet[metric] = scores_neurNet
         # results_reg[metric] = scores_reg
         # results_ridge[metric] = score_ridge
         # results_catboost[metric] = score_catboost
@@ -254,6 +291,10 @@ def trainModelKFold(dataSet, differentialColumn):
     model['RandomForest']['precision'] = (results_randFor['precision'])
     model['RandomForest']['recall'] = (results_randFor['recall'])
     model['RandomForest']['f1'] = (results_randFor['f1'])
+    model['neurNet']['accuracy'] = (results_randFor['accuracy'])
+    model['neurNet']['precision'] = (results_randFor['precision'])
+    model['neurNet']['recall'] = (results_randFor['recall'])
+    model['neurNet']['f1'] = (results_randFor['f1'])
     # model['Ridge']['neg_root_mean_squared_error'] = (
     #     results_ridge['neg_root_mean_squared_error'])
     # model['Ridge']['r2'] = (results_ridge['r2'])
@@ -273,6 +314,7 @@ def trainModelKFold(dataSet, differentialColumn):
     # plot_learning_curves(linear, X, y, differentialColumn, 'Linear')
     plot_learning_curves(decTree, X, y, differentialColumn, 'DecisionTree')
     plot_learning_curves(randFor, X, y, differentialColumn, 'RandomForest')
+    plot_learning_curves(randFor, X, y, differentialColumn, 'neurNet')
     # plot_learning_curves(reg, X, y, differentialColumn, 'LogisticRegression')
     visualizeMetricsGraphs(model)
     return model
@@ -316,7 +358,7 @@ def visualizeMetricsGraphs(model):
     plt.figure(figsize=(12, 6))
     bar_width = 0.4
     index = np.arange(len(models))
-    plt.bar(index, mean_precision, bar_width, label='accuracy')
+    plt.bar(index, mean_accuracy, bar_width, label='accuracy')
     plt.xlabel('Modelli')
     plt.ylabel('Accuracy media')
     plt.title('Accuracy media per ogni modello')
@@ -328,7 +370,7 @@ def visualizeMetricsGraphs(model):
     plt.figure(figsize=(12, 6))
     bar_width = 0.4
     index = np.arange(len(models))
-    plt.bar(index, mean_precision, bar_width, label='f1')
+    plt.bar(index, mean_f1, bar_width, label='f1')
     plt.xlabel('Modelli')
     plt.ylabel('F1 media')
     plt.title('F1 media per ogni modello')
@@ -340,7 +382,7 @@ def visualizeMetricsGraphs(model):
     plt.figure(figsize=(12, 6))
     bar_width = 0.4
     index = np.arange(len(models))
-    plt.bar(index, mean_precision, bar_width, label='recall')
+    plt.bar(index, mean_recall, bar_width, label='recall')
     plt.xlabel('Modelli')
     plt.ylabel('Recall media')
     plt.title('Recall media per ogni modello')
