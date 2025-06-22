@@ -31,22 +31,20 @@ def bNetCreation(dataSet):
     # Ricerca della struttura ottimale
     hc_k2 = HillClimbSearch(dataSet)
     k2_model = hc_k2.estimate(scoring_method='k2')
+
     # Creazione della rete bayesiana
-
     model = DiscreteBayesianNetwork(k2_model.edges)
-
-    # model = BayesianNetwork(edges)
     model.fit(dataSet, estimator=MaximumLikelihoodEstimator, n_jobs=-1)
+
     # Salvo la rete bayesiana su file
     with open('modello.pkl', 'wb') as output:
         pickle.dump(model, output)
+
     visualizeBayesianNetwork(model)
     # visualizeInfo(model)
     return model
 
 # Funzione che carica la rete bayesiana da file
-
-
 def loadBayesianNetwork():
     with open('modello.pkl', 'rb') as input:
         model = pickle.load(input)
@@ -55,15 +53,11 @@ def loadBayesianNetwork():
     return model
 
 # Predico il valore di differentialColumn per l'esempio
-
-
 def predici(bayesianNetwork, example, differentialColumn):
     inference = VariableElimination(bayesianNetwork)
     result = inference.query(variables=[differentialColumn], evidence=example)
     print(result)
 
 # genera un esempio randomico
-
-
 def generateRandomExample(bayesianNetwork):
-    return bayesianNetwork.simulate(n_samples=1).drop(columns=['Rating'])
+    return bayesianNetwork.simulate(n_samples=1).drop(columns=['Personality'])
