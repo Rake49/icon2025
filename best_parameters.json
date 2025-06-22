@@ -1,0 +1,11 @@
+{
+    "DecisionTree__criterion": "log_loss",
+    "DecisionTree__splitter": "best",
+    "decTreeMin_samples_split": 5,
+    "decTreeMin_samples_leaf": 3,
+    "decTreeMax_features": null,
+    "n_estimators": 100,
+    "randForMin_samples_split": 2,
+    "randForMin_samples_leaf": 1,
+    "randForMax_features": null
+}

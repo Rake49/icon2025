@@ -13,7 +13,7 @@ from sklearn.dummy import DummyRegressor
 
 def plot_learning_curves(model, X, y, differentialColumn, model_name):
     train_sizes, train_scores, test_scores = learning_curve(
-        model, X, y, cv=10, scoring='precision')
+        model, X, y, cv=10, scoring='neg_log_loss')
 
     # Calcola gli errori su addestramento e test
     train_errors = train_scores
@@ -66,18 +66,18 @@ def returnBestHyperparametres(dataset, differentialColumn):
 #iperparametri modelli
 
     decTreeParameters = {
-        'criterion': ('gini', 'log_loss'),
-        'splitter': ['best', 'random'],
-        'min_samples_split': [2, 5], 
-        'min_samples_leaf': [1, 3], 
-        'max_features': [None, 'sqrt']
+        'DecisionTree__criterion': ('gini', 'log_loss'),
+        'DecisionTree__splitter': ['best', 'random'],
+        'DecisionTree__min_samples_split': [2, 5], 
+        'DecisionTree__min_samples_leaf': [1, 3], 
+        'DecisionTree__max_features': [None, 'sqrt']
     }
     randForParameters = {
-        'n_estimators': [50, 100, 150],
-        'splitter': ['best', 'random'],
-        'min_samples_split': [2, 5], 
-        'min_samples_leaf': [1, 3], 
-        'max_features': [None, 'sqrt']
+        'RandomForest__n_estimators': [50, 100, 150],
+        # 'splitter': ['best', 'random'],
+        'RandomForest__min_samples_split': [2, 5], 
+        'RandomForest__min_samples_leaf': [1, 3], 
+        'RandomForest__max_features': [None, 'sqrt']
     }
 
     # RidgeRegressorHyperparameters = {
@@ -116,17 +116,17 @@ def returnBestHyperparametres(dataset, differentialColumn):
     # gridSearchCV_reg.fit(X_train, y_train)
 
     bestParameters = {
-        'criterion': gridSearchCV_decTree.best_params_['criterion'],
-        'decTreeSplitter': gridSearchCV_decTree.best_params_['splitter'],
-        'decTreeMin_samples_split': gridSearchCV_decTree.best_params_['min_samples_split'],
-        'decTreeMin_samples_leaf': gridSearchCV_decTree.best_params_['min_samples_leaf'],
-        'decTreeMax_features': gridSearchCV_decTree.best_params_['max_features'],
+        'DecisionTree__criterion': gridSearchCV_decTree.best_params_['DecisionTree__criterion'],
+        'DecisionTree__splitter': gridSearchCV_decTree.best_params_['DecisionTree__splitter'],
+        'decTreeMin_samples_split': gridSearchCV_decTree.best_params_['DecisionTree__min_samples_split'],
+        'decTreeMin_samples_leaf': gridSearchCV_decTree.best_params_['DecisionTree__min_samples_leaf'],
+        'decTreeMax_features': gridSearchCV_decTree.best_params_['DecisionTree__max_features'],
 
-        'n_estimators': gridSearchCV_randFor.best_params_['n_estimators'],
-        'randForSplitter': gridSearchCV_randFor.best_params_['splitter'],
-        'randForMin_samples_split': gridSearchCV_randFor.best_params_['min_samples_split'],
-        'randForMin_samples_leaf': gridSearchCV_randFor.best_params_['min_samples_leaf'],
-        'randForMax_features': gridSearchCV_randFor.best_params_['max_features'],
+        'n_estimators': gridSearchCV_randFor.best_params_['RandomForest__n_estimators'],
+        # 'randForSplitter': gridSearchCV_randFor.best_params_['splitter'],
+        'randForMin_samples_split': gridSearchCV_randFor.best_params_['RandomForest__min_samples_split'],
+        'randForMin_samples_leaf': gridSearchCV_randFor.best_params_['RandomForest__min_samples_leaf'],
+        'randForMax_features': gridSearchCV_randFor.best_params_['RandomForest__max_features'],
 
         # 'Ridge__alpha': gridSearchCV_ridgeReg.best_params_['Ridge__alpha'],
         # 'Ridge__solver': gridSearchCV_ridgeReg.best_params_['Ridge__solver'],
@@ -159,24 +159,24 @@ def trainModelKFold(dataSet, differentialColumn):
         #     'neg_root_mean_squared_error': [],
         #     'r2': [],
         # },
-        'Decision Tree': {
+        'DecisionTree': {
             'accuracy': [],
             'precision': [],
             'f1': [],
             'recall': [],
         },
-        'Random Forest': {
+        'RandomForest': {
             'accuracy': [],
             'precision': [],
             'f1': [],
             'recall': [],
         },
-        'Naive Bayes': {
-            'accuracy': [],
-            'precision': [],
-            'f1': [],
-            'recall': [],
-        }
+        # 'Naive Bayes': {
+        #     'accuracy': [],
+        #     'precision': [],
+        #     'f1': [],
+        #     'recall': [],
+        # }
         # 'Linear': {
         #     'neg_root_mean_squared_error': [],
         #     'r2': [],
@@ -190,13 +190,13 @@ def trainModelKFold(dataSet, differentialColumn):
     X = dataSet.drop(differentialColumn, axis=1).to_numpy()
     y = dataSet[differentialColumn].to_numpy()
 
-    decTree = DecisionTreeClassifier(criterion=bestParameters['criterion'],
-                                splitter='decTreeSplitter',
+    decTree = DecisionTreeClassifier(criterion=bestParameters['DecisionTree__criterion'],
+                                splitter=bestParameters['DecisionTree__splitter'],
                                 min_samples_split=bestParameters['decTreeMin_samples_split'],
                                 min_samples_leaf=bestParameters['decTreeMin_samples_leaf'],
                                 max_features=bestParameters['decTreeMax_features'])
     randFor = RandomForestClassifier(n_estimators=bestParameters['n_estimators'],
-                                splitter='randForSplitter',
+                                # splitter='randForSplitter',
                                 min_samples_split=bestParameters['randForMin_samples_split'],
                                 min_samples_leaf=bestParameters['randForMin_samples_leaf'],
                                 max_features=bestParameters['randForMax_features'])

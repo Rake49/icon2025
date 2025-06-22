@@ -1,0 +1,6 @@
+DecisionTree - Train Error Std: 0.019312833191353244, Test Error Std: 0.14558558482709827, Train Error Var: 0.00037298552587703554, Test Error Var: 0.021195162509448227
+RandomForest - Train Error Std: 0.0, Test Error Std: 0.07186266901026508, Train Error Var: 0.0, Test Error Var: 0.005164243197278914
+DecisionTree - Train Error Std: 0.018904494346094536, Test Error Std: 0.13789479814892874, Train Error Var: 0.0003573799064815202, Test Error Var: 0.0190149753565338
+RandomForest - Train Error Std: 0.0, Test Error Std: 0.07559523809523809, Train Error Var: 0.0, Test Error Var: 0.005714640022675736
+DecisionTree - Train Error Std: 0.02001122009561581, Test Error Std: 4.2893356156777385, Train Error Var: 0.00040044892971517797, Test Error Var: 18.39840002392152
+RandomForest - Train Error Std: 0.004721984088786922, Test Error Std: 0.10501183886019559, Train Error Var: 2.2297133734756857e-05, Test Error Var: 0.011027486300799685
