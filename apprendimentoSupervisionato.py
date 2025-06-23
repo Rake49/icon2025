@@ -3,12 +3,10 @@ import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
-
+from catboost import CatBoostClassifier
 from sklearn.model_selection import KFold, RepeatedKFold, learning_curve, train_test_split, cross_val_score, GridSearchCV
 from sklearn.pipeline import Pipeline
 import json
-from sklearn.linear_model import Ridge  # ||y - Xw||^2_2 + alpha * ||w||^2_2#
-from sklearn.dummy import DummyRegressor
 
 # Funzione che mostra la curva di apprendimento per ogni modello
 def plot_learning_curves(model, X, y, differentialColumn, model_name):
@@ -60,7 +58,7 @@ def returnBestHyperparametres(dataset, differentialColumn):
     decTree = DecisionTreeClassifier()
     randFor = RandomForestClassifier()
     neurNet = MLPClassifier()
-    # catboost = CatBoostRegressor()
+    catBoost = CatBoostClassifier()
 
 #iperparametri modelli
     decTreeParameters = {
@@ -84,17 +82,16 @@ def returnBestHyperparametres(dataset, differentialColumn):
         'neurNet__learning_rate': ['constant', 'adaptive'],
         'neurNet__max_iter': [2000]
     }
-    # CatBoostHyperparameters = {
-    #     'CatBoost__iterations': [100, 200, 300],
-    #     'CatBoost__depth': [ 6, 7, 8],
-    #     'CatBoost__learning_rate': [0.01, 0.05, 0.1],
-    #     'CatBoost__l2_leaf_reg': [1, 3],
-    #     'CatBoost__verbose': [False]
-    # }
+    catBoostParameters = {
+        'catBoost__iterations': [100, 200, 300],
+        'catBoost__depth': [6, 7, 8],
+        'catBoost__learning_rate': [0.01, 0.05, 0.1],
+        'catBoost__loss_function': ['Logloss']
+    }
 
 #ricerca parametrizzata
-    # gridSearchCV_catboost = GridSearchCV(
-    #     Pipeline([('CatBoost', catboost)]), CatBoostHyperparameters, cv=5)
+    gridSearchCV_catBoost = GridSearchCV(
+        Pipeline([('catBoost', catBoost)]), catBoostParameters, cv=5)
     gridSearchCV_decTree = GridSearchCV(
         Pipeline([('DecisionTree', decTree)]), param_grid=decTreeParameters, cv=5)
     gridSearchCV_randFor = GridSearchCV(
@@ -105,7 +102,7 @@ def returnBestHyperparametres(dataset, differentialColumn):
     gridSearchCV_decTree.fit(X_train, y_train)
     gridSearchCV_randFor.fit(X_train, y_train)
     gridSearchCV_neurNet.fit(X_train, y_train)
-    # gridSearchCV_catboost.fit(X_train, y_train)
+    gridSearchCV_catBoost.fit(X_train, y_train)
 
     bestParameters = {
         'DecisionTree__criterion': gridSearchCV_decTree.best_params_['DecisionTree__criterion'],
@@ -124,22 +121,18 @@ def returnBestHyperparametres(dataset, differentialColumn):
         'neurNet__solver': gridSearchCV_neurNet.best_params_['neurNet__solver'],
         'neurNet__alpha': gridSearchCV_neurNet.best_params_['neurNet__alpha'],
         'neurNet__learning_rate': gridSearchCV_neurNet.best_params_['neurNet__learning_rate'],
-        'neurNet__max_iter': gridSearchCV_neurNet.best_params_['neurNet__max_iter']
+        'neurNet__max_iter': gridSearchCV_neurNet.best_params_['neurNet__max_iter'],
 
-        # 'CatBoost__iterations': gridSearchCV_catboost.best_params_['CatBoost__iterations'],
-        # 'CatBoost__depth': gridSearchCV_catboost.best_params_['CatBoost__depth'],
-        # 'CatBoost__learning_rate': gridSearchCV_catboost.best_params_['CatBoost__learning_rate'],
-        # 'CatBoost__l2_leaf_reg': gridSearchCV_catboost.best_params_['CatBoost__l2_leaf_reg']
+        'catBoost__iterations': gridSearchCV_catBoost.best_params_['catBoost__iterations'],
+        'catBoost__depth': gridSearchCV_catBoost.best_params_['catBoost__depth'],
+        'catBoost__learning_rate': gridSearchCV_catBoost.best_params_['catBoost__learning_rate'],
+        'catBoost__loss_function': gridSearchCV_catBoost.best_params_['catBoost__loss_function']
     }
     return bestParameters
 
 # Funzione che esegue il training del modello mediante cross validation
 def trainModelKFold(dataSet, differentialColumn):
-    model = {        
-        # 'CatBoost': {
-        #     'neg_root_mean_squared_error': [],
-        #     'r2': [],
-        # },
+    model = {
         'DecisionTree': {
             'accuracy': [],
             'precision': [],
@@ -157,21 +150,23 @@ def trainModelKFold(dataSet, differentialColumn):
             'precision': [],
             'f1': [],
             'recall': []
+        },
+        'catBoost': {
+            'accuracy': [],
+            'precision': [],
+            'f1': [],
+            'recall': []
         }
-        # 'Naive Bayes': {
-        #     'accuracy': [],
-        #     'precision': [],
-        #     'f1': [],
-        #     'recall': [],
-        # }
     }
-    bestParameters = returnBestHyperparametres(dataSet, differentialColumn)
+    validation_set = dataSet.sample(frac = 0.25)
+    test_set = dataSet.drop(validation_set.index)
+    bestParameters = returnBestHyperparametres(validation_set, differentialColumn)
 
     # Log best parameters to a file
     with open('best_parameters.json', 'w') as file:
         json.dump(bestParameters, file, indent=4)
-    X = dataSet.drop(differentialColumn, axis=1).to_numpy()
-    y = dataSet[differentialColumn].to_numpy()
+    X = test_set.drop(differentialColumn, axis=1).to_numpy()
+    y = test_set[differentialColumn].to_numpy()
 
     decTree = DecisionTreeClassifier(criterion=bestParameters['DecisionTree__criterion'],
                                 splitter=bestParameters['DecisionTree__splitter'],
@@ -190,10 +185,10 @@ def trainModelKFold(dataSet, differentialColumn):
                                 learning_rate = bestParameters['neurNet__learning_rate'],
                                 max_iter = bestParameters['neurNet__max_iter']
     )
-    # catboost = CatBoostRegressor(iterations=bestParameters['CatBoost__iterations'],
-    #                              depth=bestParameters['CatBoost__depth'],
-    #                              learning_rate=bestParameters['CatBoost__learning_rate'],
-    #                              l2_leaf_reg=bestParameters['CatBoost__l2_leaf_reg'])
+    catBoost = CatBoostClassifier(iterations=bestParameters['catBoost__iterations'],
+                                depth=bestParameters['catBoost__depth'],
+                                learning_rate=bestParameters['catBoost__learning_rate'],
+                                loss_function=bestParameters['catBoost__loss_function'])
 
     cv = RepeatedKFold(n_splits=5, n_repeats=5)
 
@@ -202,17 +197,18 @@ def trainModelKFold(dataSet, differentialColumn):
     results_decTree = {}
     results_randFor = {}
     results_neurNet = {}
-    # results_catboost = {}
+    results_catBoost = {}
+
     for metric in scoring_metrics:
         scores_decTree = cross_val_score(decTree, X, y, scoring=metric, cv=cv)
         scores_randFor = cross_val_score(randFor, X, y, scoring=metric, cv=cv)
         scores_neurNet = cross_val_score(neurNet, X, y, scoring=metric, cv=cv)
-        # score_catboost = cross_val_score(catboost, X, y, scoring=metric, cv=cv)
+        scores_catBoost = cross_val_score(catBoost, X, y, scoring=metric, cv=cv)
 
         results_decTree[metric] = scores_decTree
         results_randFor[metric] = scores_randFor
         results_neurNet[metric] = scores_neurNet
-        # results_catboost[metric] = score_catboost
+        results_catBoost[metric] = scores_catBoost
 
     model['DecisionTree']['accuracy'] = (results_decTree['accuracy'])
     model['DecisionTree']['precision'] = (results_decTree['precision'])
@@ -222,18 +218,19 @@ def trainModelKFold(dataSet, differentialColumn):
     model['RandomForest']['precision'] = (results_randFor['precision'])
     model['RandomForest']['recall'] = (results_randFor['recall'])
     model['RandomForest']['f1'] = (results_randFor['f1'])
-    model['neurNet']['accuracy'] = (results_randFor['accuracy'])
-    model['neurNet']['precision'] = (results_randFor['precision'])
-    model['neurNet']['recall'] = (results_randFor['recall'])
-    model['neurNet']['f1'] = (results_randFor['f1'])
-    # model['CatBoost']['neg_root_mean_squared_error'] = (
-    #     results_catboost['neg_root_mean_squared_error'])
-    # model['CatBoost']['r2'] = (results_catboost['r2'])
+    model['neurNet']['accuracy'] = (results_neurNet['accuracy'])
+    model['neurNet']['precision'] = (results_neurNet['precision'])
+    model['neurNet']['recall'] = (results_neurNet['recall'])
+    model['neurNet']['f1'] = (results_neurNet['f1'])
+    model['catBoost']['accuracy'] = (results_catBoost['accuracy'])
+    model['catBoost']['precision'] = (results_catBoost['precision'])
+    model['catBoost']['recall'] = (results_catBoost['recall'])
+    model['catBoost']['f1'] = (results_catBoost['f1'])
 
-    # plot_learning_curves(catboost, X, y, differentialColumn, 'CatBoost')
     plot_learning_curves(decTree, X, y, differentialColumn, 'DecisionTree')
     plot_learning_curves(randFor, X, y, differentialColumn, 'RandomForest')
-    plot_learning_curves(randFor, X, y, differentialColumn, 'neurNet')
+    plot_learning_curves(neurNet, X, y, differentialColumn, 'neurNet')
+    plot_learning_curves(catBoost, X, y, differentialColumn, 'catBoost')
 
     visualizeMetricsGraphs(model)
     return model
@@ -248,19 +245,15 @@ def visualizeMetricsGraphs(model):
     accuracy = np.array([model[clf]['accuracy'] for clf in models])
     f1 = np.array([model[clf]['f1'] for clf in models])
     recall = np.array([model[clf]['recall'] for clf in models])
-    # rmse = np.array([model[clf]['neg_root_mean_squared_error'] for clf in models]) * -1
-    # precision = np.array([model[clf]['r2'] for clf in models])
 
     # Calcolo delle medie per ogni modello e metrica
     mean_precision = np.mean(precision, axis=1)
     mean_accuracy = np.mean(accuracy, axis=1)
     mean_f1 = np.mean(f1, axis=1)
     mean_recall = np.mean(recall, axis=1)
-    # mean_rmse = np.mean(rmse, axis=1)
-    # mean_precision = np.mean(precision, axis=1)
 
     yint = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-    
+
     # Creazione del grafico a barre per Precision
     plt.figure(figsize=(12, 6))
     bar_width = 0.4
@@ -312,25 +305,3 @@ def visualizeMetricsGraphs(model):
     plt.yticks(yint)
     plt.legend()
     plt.show()
-
-    # Creazione del grafico a barre per RMSE
-    # plt.figure(figsize=(12, 6))
-    # bar_width = 0.4
-    # index = np.arange(len(models))
-    # plt.bar(index, mean_rmse, bar_width, label='neg_root_mean_squared_error')
-    # plt.xlabel('Modelli')
-    # plt.ylabel('RMSE medio')
-    # plt.title('RMSE medio per ogni modello')
-    # plt.xticks(index, models)
-    # plt.legend()
-    # plt.show()
-
-    # # Creazione del grafico a barre per R2
-    # plt.figure(figsize=(12, 6))
-    # plt.bar(index, mean_precision, bar_width, label='r2', color='orange')
-    # plt.xlabel('Modelli')
-    # plt.ylabel('R2 medio')
-    # plt.title('R2 medio per ogni modello')
-    # plt.xticks(index, models)
-    # plt.legend()
-    # plt.show()
